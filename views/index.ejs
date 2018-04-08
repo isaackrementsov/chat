@@ -10,6 +10,9 @@
                 form.elements[0].value = '';
                 return false
             }
+            function key(){
+                socket.emit('keyup', 'typing')
+            }
             socket.on('chat message', function(msg){
                 var chats = document.getElementById('chats');
                 chats.innerHTML += `<li>${msg}</li>`

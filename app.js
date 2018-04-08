@@ -28,6 +28,9 @@ io.on('connection', function(socket){
     socket.handshake.session.username = randomName();
     socket.handshake.session.save();
     socket.on('chat message', function(msg){
+        Message.create({message:msg, author:socket.handshake.session.username}, function(err){
+            console.log(err)
+        });
         io.emit('chat message', socket.handshake.session.username + ': ' + msg)
     });
     socket.on('disconnect', function(){
