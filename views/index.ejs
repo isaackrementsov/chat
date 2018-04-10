@@ -1,6 +1,7 @@
 <html>
     <head>
         <title>Chat</title>
+<<<<<<< Updated upstream
         <script src="/socket.io/socket.io.js"></script>
         <script>
             var socket = io();
@@ -22,17 +23,18 @@
                 chats.appendChild(elem)
             })
         </script>
+=======
+>>>>>>> Stashed changes
     </head>
     <body>
         <h1>Chat</h1>
-        <ul id="chats">
-            <%for(var i = 0; i < messages.length; i++){%>
-                <li><%=messages[i].author%>: <%=messages[i].message%></li>
+        <div id="chats">
+            <%for(let i = 0; i < messages.length; i++){%>
+                <p><%=messages[i].author%>: <%=messages[i].message%></p>
             <%}%>
-        </ul>
-        <form action="" onsubmit="return msg()" id="form">
-            <input type="text" name="chat" id="chat">
-            <input type="submit" value="Send">
-        </form>
+        </div>
+        <input type="text" name="chat" id="chat" autocomplete="off">
+        <button onclick="msg()">Send</button>
+        <script src="sockets.js"></script>
     </body>
 </html>
