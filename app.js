@@ -1,43 +1,69 @@
-var app = require('express')();
+var express = require('express');
+var app = express();
 var server = require('http').Server(app); 
-var io = require('socket.io')(server);
-var session = require('express-session')({
-  secret: 'yVVma9ga',
-  saveUninitialized: true,
-  resave: true,
-  cookie: {httpOnly: true}
-});
+var session = require('express-session');
 var mongoose = require('mongoose');
 var sharedSession = require("express-socket.io-session");
 var randomName = require('node-random-name');
 var Message = require('./messages.js');
 var ejs = require('ejs');
 var path = require('path');
+var ws = require('ws');
 var url = "mongodb://localhost:27017/test";
+var wss = new ws.Server({noServer:true});
+var store = new session.MemoryStore();
+var requestSession;
 mongoose.connect(url);
 app.set('views', path.join(__dirname, './views'));
+app.use(express.static(path.join(__dirname, './public')));
 app.set('view engine', 'ejs');
+app.use(session({
+    store: store,
+    secret: '1234abcd',
+    saveUninitialized: true,
+    resave: true,
+    cookie: {httpOnly: true}
+}));
 app.set('port', process.env.PORT || 3000);
+server.listen(3000, function(){
+    console.log('listening on 3000')
+})
+server.on('upgrade', function(req,socket,head){
+    var pathname = require('url').parse(req.url).pathname;
+    if(pathname == '/' || ''){
+        wss.handleUpgrade(req, socket, head, function(ws){
+            wss.emit('connection', ws)
+        })
+    }
+});
 app.get('/', function(req,res){
+    if(!req.session.name){
+        req.session.name = randomName()      
+    }
+    requestSession = req.session;
+    console.log(req.session.name)
     Message.find({}, function(err,docs){
         res.render('index', {messages:docs})
     });
 });
-io.use(sharedSession(session));
-io.on('connection', function(socket){
-    socket.handshake.session.username = randomName();
-    socket.handshake.session.save();
-    socket.on('chat message', function(msg){
-        Message.create({message:msg, author:socket.handshake.session.username}, function(err){
-            console.log(err)
-        });
-        io.emit('chat message', socket.handshake.session.username + ': ' + msg)
-    });
-    socket.on('disconnect', function(){
-        console.log(socket.handshake.session.username + ' left');
-        delete socket.handshake.session
+var connections = [];
+function broadcast(data, users){
+    for(let i = 0; i < users.length; i++){
+        if(users[i].readyState == ws.OPEN){
+            users[i].send(data)
+        }
+    }
+}
+wss.on('connection', function(connection){
+    var name = requestSession.name;
+    var index = connections.push(connection) - 1;
+    broadcast(name + ' joined!', connections);
+    connection.on('message', function(msg){
+        Message.create({author:name, message:msg});
+        broadcast(name + ': ' + msg, connections)
     })
-});
-server.listen(3000, function(){
-    console.log('listening on 3000')
+    connection.on('close', function(){
+        connections.splice(index, 1);
+        broadcast(name + ' disconnected', connections)
+    })
 })
