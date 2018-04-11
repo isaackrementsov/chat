@@ -11,14 +11,15 @@ var path = require('path');
 var ws = require('ws');
 var url = "mongodb://localhost:27017/test";
 var wss = new ws.Server({noServer:true});
-var cookieParser = require('cookie-parser')('yVVma9ga');
+var store = new session.MemoryStore();
+var requestSession;
 mongoose.connect(url);
-app.use(cookieParser);
 app.set('views', path.join(__dirname, './views'));
 app.use(express.static(path.join(__dirname, './public')));
 app.set('view engine', 'ejs');
 app.use(session({
-    secret: 'MeMeS',
+    store: store,
+    secret: '1234abcd',
     saveUninitialized: true,
     resave: true,
     cookie: {httpOnly: true}
@@ -36,7 +37,11 @@ server.on('upgrade', function(req,socket,head){
     }
 });
 app.get('/', function(req,res){
-    req.session.name = randomName();
+    if(!req.session.name){
+        req.session.name = randomName()      
+    }
+    requestSession = req.session;
+    console.log(req.session.name)
     Message.find({}, function(err,docs){
         res.render('index', {messages:docs})
     });
@@ -50,7 +55,7 @@ function broadcast(data, users){
     }
 }
 wss.on('connection', function(connection){
-    var name = randomName();
+    var name = requestSession.name;
     var index = connections.push(connection) - 1;
     broadcast(name + ' joined!', connections);
     connection.on('message', function(msg){

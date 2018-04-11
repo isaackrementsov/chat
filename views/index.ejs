@@ -1,30 +1,6 @@
 <html>
     <head>
         <title>Chat</title>
-<<<<<<< Updated upstream
-        <script src="/socket.io/socket.io.js"></script>
-        <script>
-            var socket = io();
-            function msg(){
-                var form = document.getElementById('form');
-                socket.emit('chat message', form.elements[0].value);
-                form.elements[0].value = '';
-                return false
-            }
-            socket.on('chat message', function(msg){
-                var chats = document.getElementById('chats');
-                chats.innerHTML += `<li>${msg}</li>`
-            })
-            socket.on('disconnect', function(msg){
-                var chats = document.getElementById('chats');
-                var elem = document.createElement('LI');
-                var message = document.createTextNode(msg);
-                elem.appendChild(message);
-                chats.appendChild(elem)
-            })
-        </script>
-=======
->>>>>>> Stashed changes
     </head>
     <body>
         <h1>Chat</h1>
