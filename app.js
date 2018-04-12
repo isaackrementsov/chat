@@ -8,7 +8,6 @@ var session = require('express-session')({
   cookie: {httpOnly: true}
 });
 var mongoose = require('mongoose');
-var sharedSession = require("express-socket.io-session");
 var randomName = require('node-random-name');
 var Message = require('./messages.js');
 var ejs = require('ejs');
