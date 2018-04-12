@@ -1,0 +1,12 @@
+<html>
+    <head>
+        <title>Chat</title>
+    </head>
+    <body>
+        <h1>Home</h1>
+        <%for(let i = 0; i < chats.length; i++){%>
+            <a href="/chats/<%=chats[i]._id%>" style="display:block"><%=chats[i].title%></a>
+        <%}%>
+        <a href="/chat/create">New chat</a>
+    </body>
+</html>

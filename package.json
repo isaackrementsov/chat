@@ -9,6 +9,7 @@
   "author": "Isaac Krementsov",
   "license": "ISC",
   "dependencies": {
+    "body-parser": "^1.18.2",
     "cookie": "^0.3.1",
     "cookie-parser": "^1.4.3",
     "ejs": "^2.5.8",

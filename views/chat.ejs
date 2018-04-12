@@ -1,0 +1,18 @@
+<html>
+    <head>
+        <title>Chat</title>
+    </head>
+    <body>
+        <%if(chat){%>
+            <h1><%=chat.title%></h1>
+            <div id="chats">
+                <%for(let i = 0; i < chat.messages.length; i++){%>
+                    <p><%=chat.messages[i].author%>: <%=chat.messages[i].data%></p>
+                <%}%>
+            </div>
+            <input type="text" name="chat" id="chat" autocomplete="off">
+            <button onclick="msg()">Send</button>
+            <script src="../sockets.js"></script>
+        <%}%>
+    </body>
+</html>

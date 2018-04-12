@@ -1,2 +1,2 @@
 # chat
-Simple chat with Express, socket.io, and mongodb
+Chat with Express, websockets, and mongodb
