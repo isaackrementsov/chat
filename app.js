@@ -4,7 +4,6 @@ var server = require('http').Server(app);
 var session = require('express-session');
 var mongoose = require('mongoose');
 var sharedSession = require("express-socket.io-session");
-var randomName = require('node-random-name');
 var Chat = require('./chats.js');
 var ejs = require('ejs');
 var path = require('path');
@@ -117,16 +116,14 @@ wss.on('connection', function(connection){
     var name = requestSession.username;
     var index = connections.push({server:connection, username:name, id:requestSession.chatId}) - 1;
     broadcast(JSON.stringify({data:'online', author:name}), connections, function(message, user){
-        if(user.id == requestSession.chatId){
+        if(user.id.toString().trim() == requestSession.chatId.toString().trim()){
             user.server.send(message)
         }
     });
     connection.on('message', function(msg){
-        Chat.update({'_id':requestSession.chatId}, {$push:{'messages':{data:msg, author:name}}}, function(err, update){
-            console.log(update)
-        });
+        Chat.update({'_id':requestSession.chatId}, {$push:{'messages':{data:msg, author:name}}}, function(err, update){});
         broadcast(JSON.stringify({data:msg, author:name}), connections, function(message, user){
-            if(user.id == requestSession.chatId){
+            if(user.id.toString().trim() == requestSession.chatId.toString().trim()){
                 user.server.send(message)
             }
         })
@@ -134,7 +131,7 @@ wss.on('connection', function(connection){
     connection.on('close', function(){
         connections.splice(index, 1);
         broadcast(JSON.stringify({data:'disconnected', author:name}), connections, function(message, user){
-            if(user.id == requestSession.chatId){
+            if(user.id.toString().trim() == requestSession.chatId.toString().trim()){
                 user.server.send(message)
             }
         })

@@ -15,5 +15,5 @@ function send(data){
 ws.addEventListener('open',  function(){})
 ws.addEventListener('message', function(msg){
     var chat = document.getElementById('chats');
-    chat.innerHTML += `<p>${msg.data}</p>`
+    chat.innerHTML += `<p>${JSON.parse(msg.data).author}: ${JSON.parse(msg.data).data}</p>`
 })
