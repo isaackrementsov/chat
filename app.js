@@ -3,7 +3,6 @@ var app = express();
 var server = require('http').Server(app); 
 var session = require('express-session');
 var mongoose = require('mongoose');
-var sharedSession = require("express-socket.io-session");
 var Chat = require('./chats.js');
 var ejs = require('ejs');
 var path = require('path');
@@ -11,10 +10,12 @@ var ws = require('ws');
 var url = "mongodb://localhost:27017/test";
 var wss = new ws.Server({noServer:true});
 var store = new session.MemoryStore();
-var requestSession;
 var User = require('./users.js');
 var bodyParser = require('body-parser');
+var cookie = require('cookie');
+var cookieParser = require('cookie-parser');
 mongoose.connect(url);
+app.use(cookieParser('1234abcd'));
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json())
 app.set('views', path.join(__dirname, './views'));
@@ -34,7 +35,7 @@ server.listen(3000, function(){
 server.on('upgrade', function(req,socket,head){
     var pathname = require('url').parse(req.url).pathname;
     wss.handleUpgrade(req, socket, head, function(ws){
-        wss.emit('connection', ws)
+        wss.emit('connection', {server:ws, req:req})
     })
 });
 function auth(redirect){
@@ -88,7 +89,6 @@ app.get('/chats/:id', auth('/login'), function(req,res){
                 res.redirect('/home')
             }
         }
-        requestSession = req.session;
         res.render('chat', {chat:doc})
     })
 });
@@ -113,22 +113,25 @@ function broadcast(data, users, callback){
     }
 }
 wss.on('connection', function(connection){
+    var cookies = cookie.parse(connection.req.headers.cookie);
+    var sid = cookieParser.signedCookie(cookies['connect.sid'], '1234abcd');
+    var requestSession = JSON.parse(store.returnSession(sid));
     var name = requestSession.username;
-    var index = connections.push({server:connection, username:name, id:requestSession.chatId}) - 1;
+    var index = connections.push({server:connection.server, username:name, id:requestSession.chatId}) - 1;
     broadcast(JSON.stringify({data:'online', author:name}), connections, function(message, user){
         if(user.id.toString().trim() == requestSession.chatId.toString().trim()){
             user.server.send(message)
         }
     });
-    connection.on('message', function(msg){
+    connection.server.on('message', function(msg){
         Chat.update({'_id':requestSession.chatId}, {$push:{'messages':{data:msg, author:name}}}, function(err, update){});
         broadcast(JSON.stringify({data:msg, author:name}), connections, function(message, user){
             if(user.id.toString().trim() == requestSession.chatId.toString().trim()){
                 user.server.send(message)
             }
         })
-    })
-    connection.on('close', function(){
+    });
+    connection.server.on('close', function(){
         connections.splice(index, 1);
         broadcast(JSON.stringify({data:'disconnected', author:name}), connections, function(message, user){
             if(user.id.toString().trim() == requestSession.chatId.toString().trim()){
